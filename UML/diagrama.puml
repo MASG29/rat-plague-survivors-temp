@@ -1,0 +1,495 @@
+@startuml VampireSurvivorsMVP_SimpleGraphics
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #1e1e2e
+skinparam class {
+    BackgroundColor #2a2a3e
+    BorderColor #7c7cff
+    FontColor #ffffff
+    HeaderBackgroundColor #3a3a5e
+    HeaderFontColor #ff6b6b
+    AttributeFontColor #cdd6f4
+    StereotypeFontColor #a6e3a1
+}
+skinparam interface {
+    BackgroundColor #1e3a2e
+    BorderColor #a6e3a1
+    FontColor #a6e3a1
+    HeaderBackgroundColor #1e3a2e
+    HeaderFontColor #a6e3a1
+}
+skinparam enum {
+    BackgroundColor #3a2e1e
+    BorderColor #fab387
+    FontColor #fab387
+    HeaderBackgroundColor #3a2e1e
+    HeaderFontColor #fab387
+}
+skinparam note {
+    BackgroundColor #2e2a1e
+    BorderColor #f9e2af
+    FontColor #f9e2af
+}
+skinparam arrow {
+    Color #cdd6f4
+    FontColor #89b4fa
+    FontSize 10
+}
+
+' =============================
+'   SIMPLE GRAPHICS LIBRARY
+' =============================
+
+package "SimpleGraphics Library" #2a2a2a {
+
+    interface Shape <<library>> {
+        + getX(): int
+        + getY(): int
+        + getWidth(): int
+        + getHeight(): int
+        + draw(): void
+        + delete(): void
+        + paintShape(g2D: Graphics2D): void
+    }
+
+    interface Movable <<library>> {
+        + translate(dx: double, dy: double): void
+    }
+
+    interface Colorable <<library>> {
+        + setColor(color: Color): void
+    }
+
+    interface Fillable <<library>> {
+        + fill(): void
+    }
+
+    interface KeyboardHandler <<library>> {
+        + keyPressed(event: KeyboardEvent): void
+        + keyReleased(event: KeyboardEvent): void
+    }
+
+    interface MouseHandler <<library>> {
+        + mouseClicked(event: MouseEvent): void
+        + mouseMoved(event: MouseEvent): void
+    }
+
+    class Canvas <<library>> {
+        - {static} canvas: Canvas
+        + {static} getCanvas(): Canvas
+        + {static} setMaxX(width: int): void
+        + {static} setMaxY(height: int): void
+        + show(shape: Shape): void
+        + hide(shape: Shape): void
+        + repaint(): void
+        + {static} snapshot(): void
+        + addKeyListener(kl: KeyListener): void
+        + addMouseListener(ml: MouseListener): void
+    }
+
+    class Picture <<library>> {
+        - x: double
+        - y: double
+        - image: BufferedImage
+        + Picture(x, y, source: String)
+        + load(source: String): void
+        + translate(dx, dy: double): void
+        + grow(dw, dh: double): void
+        + getX(): int
+        + getY(): int
+        + getWidth(): int
+        + getHeight(): int
+        + draw(): void
+        + delete(): void
+    }
+
+    class Rectangle <<library>> {
+        - x, y, width, height: double
+        - filled: boolean
+        - color: Color
+        + Rectangle(x, y, w, h: double)
+        + translate(dx, dy: double): void
+        + grow(dw, dh: double): void
+        + setColor(color: Color): void
+        + draw(): void
+        + fill(): void
+        + delete(): void
+    }
+
+    class Ellipse <<library>> {
+        - x, y, width, height: double
+        - filled: boolean
+        + Ellipse(x, y, w, h: double)
+        + translate(dx, dy: double): void
+        + setColor(color: Color): void
+        + draw(): void
+        + fill(): void
+        + delete(): void
+    }
+
+    class Text <<library>> {
+        - x, y: double
+        + Text(x, y: double, message: String)
+        + setText(message: String): void
+        + translate(dx, dy: double): void
+        + setColor(color: Color): void
+        + draw(): void
+        + delete(): void
+    }
+
+    class Keyboard <<library>> {
+        + Keyboard(handler: KeyboardHandler)
+        + addEventListener(event: KeyboardEvent): void
+        + removeEventListener(event: KeyboardEvent): void
+    }
+
+    class KeyboardEvent <<library>> {
+        + {static} KEY_UP, KEY_DOWN: int
+        + {static} KEY_LEFT, KEY_RIGHT: int
+        + {static} KEY_W, KEY_A, KEY_S, KEY_D: int
+        + {static} KEY_SPACE, KEY_ESC: int
+        + getKey(): int
+        + getKeyboardEventType(): KeyboardEventType
+    }
+
+    class Mouse <<library>> {
+        + Mouse(handler: MouseHandler)
+        + addEventListener(type: MouseEventType): void
+    }
+
+    class Color <<library>> {
+        + {static} RED, GREEN, BLUE: Color
+        + {static} BLACK, WHITE, YELLOW: Color
+        + Color(r, g, b: int)
+    }
+
+    ' Library internal relations
+    Picture    ..|> Shape
+    Picture    ..|> Movable
+    Rectangle  ..|> Shape
+    Rectangle  ..|> Movable
+    Rectangle  ..|> Colorable
+    Rectangle  ..|> Fillable
+    Ellipse    ..|> Shape
+    Ellipse    ..|> Movable
+    Ellipse    ..|> Colorable
+    Ellipse    ..|> Fillable
+    Text       ..|> Shape
+    Text       ..|> Movable
+    Text       ..|> Colorable
+}
+
+' =============================
+'        ENUMS DO JOGO
+' =============================
+
+enum PCType {
+    WARRIOR
+    --
+    - name: String
+    - baseHealth: int
+    - baseDamage: int
+    - attackType: String
+    + getName(): String
+    + getBaseHealth(): int
+    + getBaseDamage(): int
+    + getAttackType(): String
+}
+
+enum GameState {
+    PLAYING
+    PAUSED
+    GAME_OVER
+}
+
+enum EnumNiveis {
+    NIVEL_1
+    NIVEL_2
+    NIVEL_3
+}
+
+' =============================
+'       POSIÇÃO / COLISÃO
+' =============================
+
+class Position {
+    - x: int
+    - y: int
+    - w: int
+    - h: int
+    + getX(): int
+    + getY(): int
+    + getW(): int
+    + getH(): int
+    + setters...
+}
+
+class CollisionDetector {
+    + {static} hasCollided(a: Position, b: Position): boolean
+}
+
+' =============================
+'         ATAQUE
+' =============================
+
+interface Attackable {
+    + attack(): void
+}
+
+abstract class BaseAttack {
+    # radius: int
+    # range: int
+    # baseAtkSpd: int
+    # baseDmg: int
+    # sprite: Shape
+    # current: Position
+    + getRadius(): int
+    + getRange(): int
+    + getDamage(): int
+    + {abstract} attack(): void
+    + updatePosition(pos: Position): void
+}
+
+class Sword {
+    - swingSprite: Shape
+    + attack(): void
+    + show(): void
+    + hide(): void
+}
+
+' =============================
+'      ENTIDADES BASE
+' =============================
+
+abstract class Personagem {
+    # name: String
+    # baseHealth: int
+    # currentHP: int
+    # position: Position
+    # sprite: Shape
+    # alive: boolean
+    + getName(): String
+    + getHP(): int
+    + takeDamage(amount: int): void
+    + isAlive(): boolean
+    + getPosition(): Position
+    + getSprite(): Shape
+    + {abstract} update(): void
+    + render(): void
+}
+
+' =============================
+'     PERSONAGEM JOGAVEL
+' =============================
+
+class PlayableCharacter {
+    - character: PCType
+    - xp: int
+    - levelingSystem: LevelingSystem
+    - weapon: BaseAttack
+    + getCharacter(): PCType
+    + gainXP(amount: int): void
+    + getWeapon(): BaseAttack
+    + update(): void
+    + attack(): void
+}
+
+class LevelingSystem {
+    - currentXP: int
+    - level: int
+    - maxLevel: int
+    - xpToLevel: int
+    + addXP(xp: int): void
+    + getLevel(): int
+    + getCurrentXP(): int
+    + canLevel(): boolean
+    + getters/setters...
+}
+
+' =============================
+'          INIMIGO
+' =============================
+
+class Enemy {
+    - hp: int
+    - xpValue: int
+    - typeOfAttack: BaseAttack
+    - pos: Position
+    - sprite: Shape
+    + getHP(): int
+    + takeDamage(amount: int): void
+    + isAlive(): boolean
+    + update(): void
+    + chasePlayer(target: Position): void
+    + dropXP(): int
+}
+
+' =============================
+'         SPAWNER
+' =============================
+
+class EnemySpawner {
+    - spawnRate: int
+    - maxCount: int
+    - enemies: List<Enemy>
+    + spawn(target: PlayableCharacter): Enemy
+    + update(target: PlayableCharacter): void
+    + getEnemies(): List<Enemy>
+    + removeDeadEnemies(): void
+}
+
+' =============================
+'           MAPA
+' =============================
+
+class Map {
+    - mapSprite: Shape
+    - nivel: EnumNiveis
+    + Map(nivel: EnumNiveis)
+    + render(): void
+    + recenter(pos: Position): void
+    + getBounds(): Position
+    + getNivel(): EnumNiveis
+}
+
+' =============================
+'            HUD
+' =============================
+
+class HUD {
+    - hp: int
+    - nameText: Text
+    - hpText: Text
+    - xpText: Text
+    - hpDisplay: Rectangle
+    - hpBar: Rectangle
+    + HUD(player: PlayableCharacter)
+    + update(player: PlayableCharacter): void
+    + render(): void
+    + showGameOver(): void
+}
+
+' =============================
+'      INPUT HANDLERS
+' =============================
+
+class KeyboardHandler_Game {
+    - player: PlayableCharacter
+    - keysHeld: Set<Integer>
+    + keyPressed(event: KeyboardEvent): void
+    + keyReleased(event: KeyboardEvent): void
+    + processMovement(): void
+}
+
+class MouseHandler_Game {
+    + mouseClicked(event: MouseEvent): void
+    + mouseMoved(event: MouseEvent): void
+}
+
+' =============================
+'         GAME LOOP
+' =============================
+
+class GameLoop {
+    - player: PlayableCharacter
+    - spawner: EnemySpawner
+    - map: Map
+    - hud: HUD
+    - keyboard: Keyboard
+    - mouse: Mouse
+    - state: GameState
+    - elapsedTime: int
+    + init(): void
+    + start(): void
+    + update(): void
+    + render(): void
+    + checkCollisions(): void
+    + setState(state: GameState): void
+}
+
+' =============================
+'           MAIN
+' =============================
+
+class Main {
+    + {static} main(args: String[]): void
+}
+
+' =============================
+'          RELAÇÕES
+' =============================
+
+' Herança
+PlayableCharacter  --|>  Personagem
+Enemy              --|>  Personagem
+Sword              --|>  BaseAttack
+
+' Interfaces jogo
+PlayableCharacter    ..|>  Attackable
+Enemy                ..|>  Attackable
+BaseAttack           ..|>  Attackable
+KeyboardHandler_Game ..|>  KeyboardHandler
+MouseHandler_Game    ..|>  MouseHandler
+
+' Composição
+PlayableCharacter  "1" *-- "1"  LevelingSystem : has
+PlayableCharacter  "1" *-- "1"  BaseAttack     : has weapon
+PlayableCharacter  "1" *-- "1"  Position       : has position
+PlayableCharacter  "1" *-- "1"  Shape          : has sprite
+Enemy              "1" *-- "1"  Position       : has position
+Enemy              "1" *-- "1"  Shape          : has sprite
+Enemy              "1" *-- "1"  BaseAttack     : has attack
+BaseAttack         "1" *-- "1"  Shape          : has sprite
+BaseAttack         "1" *-- "1"  Position       : has position
+HUD                "1" *-- "2"  Rectangle      : hp bars
+HUD                "1" *-- "3"  Text           : labels
+Map                "1" *-- "1"  Shape          : background sprite
+GameLoop           "1" *-- "1"  PlayableCharacter
+GameLoop           "1" *-- "1"  EnemySpawner
+GameLoop           "1" *-- "1"  Map
+GameLoop           "1" *-- "1"  HUD
+GameLoop           "1" *-- "1"  Keyboard
+GameLoop           "1" *-- "1"  Mouse
+GameLoop           "1" *-- "1"  GameState
+
+' Associação
+EnemySpawner       "1"    --> "many"  Enemy            : spawns & manages
+Enemy              "many" -->  "1"    PlayableCharacter : targets
+HUD                "1"    -->  "1"    PlayableCharacter : reads state
+
+' Usa biblioteca
+GameLoop           ..>  Canvas               : Canvas.getCanvas()
+Map                ..>  Canvas               : draw/delete
+Personagem         ..>  Canvas               : sprite.draw()
+HUD                ..>  Canvas               : shapes.draw()
+
+' Dependências
+CollisionDetector  ..>  Position             : uses
+GameLoop           ..>  CollisionDetector    : calls
+Main               ..>  GameLoop             : creates
+GameLoop           ..>  KeyboardHandler_Game : creates
+GameLoop           ..>  MouseHandler_Game    : creates
+PlayableCharacter  ..>  PCType               : uses enum
+Map                ..>  EnumNiveis           : uses enum
+
+' =============================
+'            NOTAS
+' =============================
+
+note bottom of Personagem
+  Fase 1: sprite = new Rectangle(...)
+  Fase 2: sprite = new Picture(...)
+  Zero alterações na lógica!
+end note
+
+note bottom of BaseAttack
+  Fase 1: swingSprite = new Rectangle(...)
+  Fase 2: swingSprite = new Picture(...)
+end note
+
+note bottom of Map
+  Fase 1: mapSprite = new Rectangle(...)
+  Fase 2: mapSprite = new Picture(...)
+end note
+
+@enduml
