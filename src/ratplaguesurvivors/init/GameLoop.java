@@ -207,16 +207,14 @@ public class GameLoop {
         }
     }
 
-    private void checkEnemyCollisions(){
+    private void checkEnemyCollisions() {
         int dx;
         int dy;
 
-        for (Enemy enemies : spawner.getEnemyGroup()){
-
+        for (Enemy enemies : spawner.getEnemyGroup()) {
 
             dx = enemies.chasePlayer(player.getHitbox())[0];
             dy = enemies.chasePlayer(player.getHitbox())[1];
-
 
             if (player.isAttacking()) {
                 if (enemies.hasCollided(player.getBaseAttack())) {
@@ -228,7 +226,7 @@ public class GameLoop {
                         player.killConfirmed(enemies.getEnemyType());
                         spawner.decreaseAliveEnemies(enemies.getEnemyType());
                         if (enemies.getEnemyType() == EnemyType.GIGARAT) {
-                            if (lvl == MapLevel.values()[MapLevel.values().length - 1]){
+                            if (lvl == MapLevel.values()[MapLevel.values().length - 1]) {
                                 setState(OVER);
                                 return;
                             }
@@ -246,15 +244,34 @@ public class GameLoop {
                 }
             }
 
-            if(pathFind(enemies, dx, dy)){
+            // --- NOVO: boss não se move enquanto ataca ---
+            if (enemies.getEnemyType() == EnemyType.GIGARAT) {
+                BossAnimationController bossAnim = (BossAnimationController) enemies.getAnimationController();
+                enemies.updateAnimation();
+                // só move se não estiver em animação de ataque
+                if (!bossAnim.isAttacking()) {
+                    if (pathFind(enemies, dx, dy)) {
+                        enemies.chasePlayer(dx, dy);
+                    } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
+                        enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
+                    } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
+                        enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
+                    }
+                }
+                // dano dado só quando a animação de ataque terminou E ainda está em contacto
+                if (bossAnim.wasAttackJustFinished() && enemies.hasCollided(player)) {
+                    player.takeDamage(enemies.getDmg());
+                }
+                continue; // salta o bloco de movimento dos inimigos normais
+            }
+
+            if (pathFind(enemies, dx, dy)) {
                 enemies.chasePlayer(dx, dy);
-            }
-            else if(pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0){
-                enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(),  0);
-            }
-            else if(pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0){
+            } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
+                enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
+            } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
                 enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
-            }        
+            }
         }
     }
 

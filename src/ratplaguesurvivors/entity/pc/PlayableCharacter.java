@@ -138,9 +138,13 @@ public class PlayableCharacter extends Entity implements Moves {
 
     @Override
     public void collided(Collidable obj2) {
-        if (obj2 instanceof Enemy){
-            if (((Enemy)obj2).cooldownReset()){
-                takeDamage(((Enemy)obj2).getDmg());
+        if (obj2 instanceof Enemy) {
+            Enemy enemy = (Enemy) obj2;
+            if (enemy.getEnemyType() == EnemyType.GIGARAT) {
+                return; // dano dado no GameLoop depois da animação terminar
+            }
+            if (enemy.cooldownReset()) {
+                takeDamage(enemy.getDmg());
             }
         }
     }

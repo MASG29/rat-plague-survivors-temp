@@ -9,7 +9,7 @@ import ratplaguesurvivors.utils.CollisionDetector;
 import ratplaguesurvivors.utils.Position;
 import ratplaguesurvivors.interfaces.*;
 
- public class Enemy extends Entity implements Moves{
+public class Enemy extends Entity implements Moves{
     private static final int SPRITE_WIDTH = 47;
     private static final int SPRITE_HEIGHT = 80;
     protected int xpValue;
@@ -17,7 +17,7 @@ import ratplaguesurvivors.interfaces.*;
     private Picture sprite;
     private int speed;
     private int dmg;
-    private int tickCount;
+    private int attackTickCount;
     private EnemyAnimationController animationController;
     private EnemyType enemyType;
     private boolean hudCol;
@@ -36,7 +36,7 @@ import ratplaguesurvivors.interfaces.*;
         this.speed = type.getSpeed();
         this.animationController = type.createAnimationController(sprite);
         this.dmg = type.getDamage();
-        this.tickCount = 0;
+        this.attackTickCount = 0;
         this.enemyType = type;
         if (type == EnemyType.GIGARAT) {
             super.setHitbox(dx + 40, dy + 10, 192 - 80, 192 - 10);
@@ -61,8 +61,8 @@ import ratplaguesurvivors.interfaces.*;
     }
 
     public boolean cooldownReset() {
-        if (this.tickCount >= 60) {
-            this.tickCount = 0;
+        if (this.attackTickCount >= 60) {
+            this.attackTickCount = 0;
             return true;
         }
         return false;
@@ -77,7 +77,7 @@ import ratplaguesurvivors.interfaces.*;
         double yDiff = target.getY() - enemyPos.getY();
         //calculates de distance
         double distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-        //only moves if it isnt already inside the player pos
+        //only moves if it isn't already inside the player pos
         if (distance > 1) {
             int dxMove = (int) Math.round((xDiff / distance) * speed);
             int dyMove = (int) Math.round((yDiff / distance) * speed);
@@ -89,9 +89,9 @@ import ratplaguesurvivors.interfaces.*;
     }
 
     public void chasePlayer(int dx, int dy) {
-
-        //Each time it moves it increses the tick so it has to move 60 times to atack the player
-        this.tickCount++;
+        if (enemyType.isIncrementOnChase()){
+            attackTickCount++;
+        }
         if (!hudCol){
             animationController.setDirection(dx, dy);
             updateAnimation();
@@ -109,10 +109,6 @@ import ratplaguesurvivors.interfaces.*;
     }
     public void updateAnimation() {
         animationController.update();
-    }
-
-    public int getTickCount() {
-        return tickCount;
     }
 
     public int getDmg() {
@@ -140,11 +136,16 @@ import ratplaguesurvivors.interfaces.*;
     @Override
     public void collided(Collidable obj2) {
         if (obj2 instanceof PlayableCharacter){
-            tickCount++;
+            if (!enemyType.isIncrementOnChase()){
+                attackTickCount++;
+            }
+
             //If the enemy that collided is the boss, start its attack animation
             if (this.enemyType == EnemyType.GIGARAT){
-                this.isAttacking = true;
-                animationController.startAttackAnim();
+                BossAnimationController bac = (BossAnimationController) animationController;
+                if (!bac.isAttacking()){
+                    bac.startAttackAnim();
+                }
             }
         }
         if (obj2 instanceof BaseAttack){
@@ -158,5 +159,9 @@ import ratplaguesurvivors.interfaces.*;
         if (obj2 instanceof HUDComponent){
             hudCol = true;
         }
+    }
+
+    public EnemyAnimationController getAnimationController(){
+        return animationController;
     }
 }

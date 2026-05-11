@@ -11,7 +11,8 @@ public class BossAnimationController implements EnemyAnimationController {
     private BossSpriteType[] currentAnimation;
     private int currentFrame;
     private int tickCount;
-    private boolean finished = true;
+    private boolean finished = false;
+    private boolean attackJustFinished = false;
     private boolean isAttacking = false;
     private int lastX;
     private int lastY;
@@ -79,7 +80,11 @@ public class BossAnimationController implements EnemyAnimationController {
         if (tickCount >= TICKS_PER_FRAME) {
             tickCount = 0;
             if (currentFrame >= currentAnimation.length - 1 && isAttacking) {
+                isAttacking = false;
                 finished = true;
+                attackJustFinished = true;
+                setDirection(lastX, lastY);
+                return;
             }
             currentFrame = (currentFrame + 1) % currentAnimation.length;
             sprite.load(currentAnimation[currentFrame].getPath());
@@ -115,6 +120,8 @@ public class BossAnimationController implements EnemyAnimationController {
     public void startAttackAnim() {
         //Start the attack animation based on the last direction
         this.isAttacking = true;
+        this.finished = false;
+        this.attackJustFinished = false;
         if (lastY > 0) {
             setAnimation(ATTACK_DOWN);
         } else if (lastY < 0) {
@@ -127,6 +134,16 @@ public class BossAnimationController implements EnemyAnimationController {
     }
 
     // getters
+    public boolean wasAttackJustFinished(){
+        if (attackJustFinished) {
+            attackJustFinished = false;
+            return true;
+        }
+        return false;
+    }
+    public boolean isAttacking(){
+        return isAttacking;
+    }
     public boolean isFinished() {
         return finished;
     }
