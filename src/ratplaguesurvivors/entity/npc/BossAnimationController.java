@@ -2,15 +2,14 @@ package ratplaguesurvivors.entity.npc;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
 
+import ratplaguesurvivors.entity.BaseAnimationController;
 import ratplaguesurvivors.interfaces.EnemyAnimationController;
 
-public class BossAnimationController implements EnemyAnimationController {
-    private static final int TICKS_PER_FRAME = 8; // Changes the image every 2 ticks
+public class BossAnimationController extends BaseAnimationController implements EnemyAnimationController {
+
 
     private Picture sprite;
-    private BossSpriteType[] currentAnimation;
-    private int currentFrame;
-    private int tickCount;
+    private BossSpriteType[] currentAnimation = DOWN;
     private boolean finished = false;
     private boolean attackJustFinished = false;
     private boolean isAttacking = false;
@@ -68,27 +67,22 @@ public class BossAnimationController implements EnemyAnimationController {
 
 
     public BossAnimationController(Picture sprite) {
-        this.sprite = sprite;
-        this.currentAnimation = DOWN;
-        this.currentFrame = 0;
-        this.tickCount = 0;
+        super(sprite);
+
     }
 
 
-    public void update() {
-        tickCount++;
-        if (tickCount >= TICKS_PER_FRAME) {
-            tickCount = 0;
-            if (currentFrame >= currentAnimation.length - 1 && isAttacking) {
-                isAttacking = false;
-                finished = true;
-                attackJustFinished = true;
-                setDirection(lastX, lastY);
-                return;
-            }
-            currentFrame = (currentFrame + 1) % currentAnimation.length;
-            sprite.load(currentAnimation[currentFrame].getPath());
+    @Override
+    public void advanceframe() {
+        if (currentFrame >= currentAnimation.length - 1 && isAttacking) {
+            isAttacking = false;
+            finished = true;
+            attackJustFinished = true;
+            setDirection(lastX, lastY);
+            return;
         }
+        currentFrame = (currentFrame + 1) % currentAnimation.length;
+        sprite.load(currentAnimation[currentFrame].getPath());
     }
 
     public void setAnimation(BossSpriteType[] newAnimation) {

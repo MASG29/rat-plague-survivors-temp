@@ -2,18 +2,15 @@ package ratplaguesurvivors.entity.npc;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
 
+import ratplaguesurvivors.entity.BaseAnimationController;
 import ratplaguesurvivors.interfaces.EnemyAnimationController;
 
 
-class RatAnimationController implements EnemyAnimationController {
+class RatAnimationController extends BaseAnimationController implements EnemyAnimationController {
 
-    private static final int TICKS_PER_FRAME = 8; // Changes the image every 2 ticks
 
-    private Picture sprite;
-    private RatSpriteType[] currentAnimation;
-    private int currentFrame;
-    private int tickCount;
-    private boolean finished = false;
+    private RatSpriteType[] currentAnimation = DOWN;
+
 
     // Arrays to each action
     private static final RatSpriteType[] DOWN = {
@@ -34,20 +31,15 @@ class RatAnimationController implements EnemyAnimationController {
 
 
     public RatAnimationController(Picture sprite) {
-        this.sprite = sprite;
-        this.currentAnimation = DOWN;
-        this.currentFrame = 0;
-        this.tickCount = 0;
+        super(sprite);
     }
 
+    @Override
+    public void advanceframe() {
 
-    public void update() {
-        tickCount++;
-        if (tickCount >= TICKS_PER_FRAME) {
-            tickCount = 0;
-            currentFrame = (currentFrame + 1) % currentAnimation.length;
-            sprite.load(currentAnimation[currentFrame].getPath());
-        }
+        currentFrame = (currentFrame + 1) % currentAnimation.length;
+        sprite.load(currentAnimation[currentFrame].getPath());
+
     }
 
     public void setAnimation(RatSpriteType[] newAnimation) {
@@ -77,11 +69,9 @@ class RatAnimationController implements EnemyAnimationController {
     }
 
     // getters
-    public boolean isFinished() {
-        return finished;
-    }
 
-        public static RatSpriteType[] getRatDown() {
+
+    public static RatSpriteType[] getRatDown() {
         return DOWN;
     }
 

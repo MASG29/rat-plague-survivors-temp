@@ -2,18 +2,13 @@ package ratplaguesurvivors.entity.npc;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
 
+import ratplaguesurvivors.entity.BaseAnimationController;
 import ratplaguesurvivors.interfaces.EnemyAnimationController;
 
 
-class MouseAnimationController implements EnemyAnimationController {
+class MouseAnimationController extends BaseAnimationController implements EnemyAnimationController {
 
-    private static final int TICKS_PER_FRAME = 8; // Changes the image every 2 ticks
-
-    private Picture sprite;
-    private MouseSpriteType[] currentAnimation;
-    private int currentFrame;
-    private int tickCount;
-    private boolean finished = false;
+    private MouseSpriteType[] currentAnimation = DOWN;
 
     // Arrays to each action
     private static final MouseSpriteType[] DOWN = {
@@ -34,20 +29,16 @@ class MouseAnimationController implements EnemyAnimationController {
 
 
     public MouseAnimationController(Picture sprite) {
-        this.sprite = sprite;
-        this.currentAnimation = DOWN;
-        this.currentFrame = 0;
-        this.tickCount = 0;
+        super(sprite);
     }
 
 
-    public void update() {
-        tickCount++;
-        if (tickCount >= TICKS_PER_FRAME) {
-            tickCount = 0;
-            currentFrame = (currentFrame + 1) % currentAnimation.length;
-            sprite.load(currentAnimation[currentFrame].getPath());
-        }
+    @Override
+    public void advanceframe() {
+
+        currentFrame = (currentFrame + 1) % currentAnimation.length;
+        sprite.load(currentAnimation[currentFrame].getPath());
+
     }
 
     public void setAnimation(MouseSpriteType[] newAnimation) {
@@ -78,9 +69,6 @@ class MouseAnimationController implements EnemyAnimationController {
 
 
     // getters
-    public boolean isFinished() {
-        return finished;
-    }
 
     public static MouseSpriteType[] getMouseDown() {
         return DOWN;
