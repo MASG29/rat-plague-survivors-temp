@@ -3,8 +3,9 @@ package ratplaguesurvivors.hud;
 import ratplaguesurvivors.input.MouseHandler;
 import ratplaguesurvivors.input.ScoreLoader;
 import ratplaguesurvivors.input.SoundHandler;
+import ratplaguesurvivors.interfaces.MouseInputListener;
 
-public class GameMenu {
+public class GameMenu implements MouseInputListener {
 
     private static final String MENU_BUTTON_KEY = "menuButton";
 
@@ -105,7 +106,7 @@ public class GameMenu {
         startButtonHovering = false;
         trophyHovering = false;
 
-        mouseHandler = new MouseHandler(this, null, null);
+        mouseHandler = new MouseHandler(this); // só passa a si próprio
         mouseHandler.init();
 
     }
@@ -267,6 +268,21 @@ public class GameMenu {
         leaderboardKills = scoreLoader.getKills();
         leaderboardName = scoreLoader.getName();
         leaderboardXp = scoreLoader.getXp();
+    }
+
+    @Override
+    public void onMouseMoved(int x, int y) {
+        if (isOnStartButton(x, y)) showHoverButton();
+        else showNormalButton();
+
+        if (isOnTrophyForLeaderboard(x, y)) showLeaderboardHoverButton();
+        else showLeaderboardButton();
+    }
+
+    public void onMouseClicked(int x, int y) {
+        if (isOnStartButton(x, y))          { requestStart(); return; }
+        if (isOnTrophyForLeaderboard(x, y)) { LeaderboardRequested(); return; }
+        if (isOnSound(x, y))                { updateSoundButton(); }
     }
 }
 

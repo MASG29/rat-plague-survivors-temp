@@ -3,20 +3,20 @@ package ratplaguesurvivors.input;
 import com.codeforall.online.simplegraphics.mouse.Mouse;
 import com.codeforall.online.simplegraphics.mouse.MouseEvent;
 import com.codeforall.online.simplegraphics.mouse.MouseEventType;
-import ratplaguesurvivors.hud.GameMenu;
-import ratplaguesurvivors.hud.GameOverMenu;
+import ratplaguesurvivors.interfaces.MouseInputListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MouseHandler implements com.codeforall.online.simplegraphics.mouse.MouseHandler {
 
     private Mouse mouse;
-    private GameMenu gameMenu;
-    private GameOverMenu gameOverMenu;
-    private PlayerName  playerName;
+    private final List<MouseInputListener> listeners = new ArrayList<>();
 
-    public MouseHandler(GameMenu gameMenu,GameOverMenu gameOverMenu,PlayerName playerName) {
-        this.gameMenu = gameMenu;
-        this.gameOverMenu = gameOverMenu;
-        this.playerName = playerName;
+    public MouseHandler(MouseInputListener... listeners) {
+        for (MouseInputListener l : listeners) {
+            if (l != null) this.listeners.add(l);
+        }
     }
 
     public void init() {
@@ -32,69 +32,17 @@ public class MouseHandler implements com.codeforall.online.simplegraphics.mouse.
             mouse = null;
         }
     }
+
     @Override
-    public void mouseMoved(MouseEvent mouseEvent) {
-
-        int mouseX = (int) mouseEvent.getX();
-        int mouseY = (int) mouseEvent.getY();
-
-        if(gameMenu !=null) {
-            if (gameMenu.isOnStartButton(mouseX, mouseY)) {
-                gameMenu.showHoverButton();
-            } else {
-                gameMenu.showNormalButton();
-            }
-            if (gameMenu.isOnTrophyForLeaderboard(mouseX, mouseY)) {
-                gameMenu.showLeaderboardHoverButton();
-            } else {
-                gameMenu.showLeaderboardButton();
-            }
-        }
-        if(gameOverMenu !=null) {
-
-            if (gameOverMenu.isOnTryAgainRequested(mouseX, mouseY)) {
-                gameOverMenu.showHoveringTryAgainButton();
-            } else {
-                gameOverMenu.showNormalTryAgainButton();
-            }
-            if (gameOverMenu.isOnQuitRequested(mouseX, mouseY)) {
-                gameOverMenu.showHoveringQuitButton();
-            } else {
-                gameOverMenu.showNormalQuitButton();
-            }
-        }
+    public void mouseMoved(MouseEvent e) {
+        int x = (int) e.getX();
+        int y = (int) e.getY();
+        for (MouseInputListener l : listeners) l.onMouseMoved(x, y);
     }
+
     @Override
-    public void mouseClicked(MouseEvent mouseEvent) {
-        int mouseX = (int) mouseEvent.getX();
-        int mouseY = (int) mouseEvent.getY();
-
-        if(gameMenu !=null) {
-            if (gameMenu.isOnStartButton(mouseX, mouseY)) {
-                gameMenu.requestStart();
-                return;
-            }
-            if (gameMenu.isOnTrophyForLeaderboard(mouseX, mouseY)) {
-                gameMenu.LeaderboardRequested();
-                return;
-            }
-            if(gameMenu.isOnSound(mouseX, mouseY)){
-                gameMenu.updateSoundButton();
-                return;
-            }
-        }
-        if(gameOverMenu !=null) {
-            if (gameOverMenu.isOnQuitRequested(mouseX, mouseY)) {
-                gameOverMenu.requestQuit();
-            }
-            if (gameOverMenu.isOnTryAgainRequested(mouseX, mouseY)) {
-                gameOverMenu.requestTryAgain();
-            }
-        }
-    if(playerName!=null && playerName.isActive()) {
-        if (playerName.isOnStartButton(mouseX, mouseY)) {
-            playerName.requestStart();
-        }
-    }}
-
+    public void mouseClicked(MouseEvent e) {
+        int x = (int) e.getX(), y = (int) e.getY();
+        for (MouseInputListener l : listeners) l.onMouseClicked(x, y);
+    }
 }
