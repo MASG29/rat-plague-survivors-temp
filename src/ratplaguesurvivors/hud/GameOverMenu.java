@@ -58,7 +58,7 @@ public class GameOverMenu {
         isHoveringQuit = false;
         isHoveringTryAgain = false;
 
-        mouseHandler = new MouseHandler(null, this,null);
+        mouseHandler = new MouseHandler(null,null);
         mouseHandler.init();
 
         backgroundOverPicture = new Picture(0, 0, backgroundOverPicturePath);

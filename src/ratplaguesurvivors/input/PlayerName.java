@@ -46,7 +46,7 @@ public class PlayerName {
 
         updateNameText();
 
-        mouseHandler = new MouseHandler(null,null,this);
+        mouseHandler = new MouseHandler(null,null);
         mouseHandler.init();
     };
 
