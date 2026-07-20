@@ -7,8 +7,6 @@ import ratplaguesurvivors.interfaces.EnemyAnimationController;
 
 public class BossAnimationController extends BaseAnimationController implements EnemyAnimationController {
 
-
-    private Picture sprite;
     private BossSpriteType[] currentAnimation = DOWN;
     private boolean finished = false;
     private boolean attackJustFinished = false;
