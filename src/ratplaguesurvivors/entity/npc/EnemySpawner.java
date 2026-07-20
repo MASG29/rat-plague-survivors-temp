@@ -2,7 +2,6 @@ package ratplaguesurvivors.entity.npc;
 
 import ratplaguesurvivors.map.Map;
 import ratplaguesurvivors.utils.CollisionDetector;
-import ratplaguesurvivors.utils.Position;
 import ratplaguesurvivors.utils.Util;
 import ratplaguesurvivors.interfaces.*;
 import java.util.ArrayList;
@@ -117,15 +116,6 @@ public class EnemySpawner implements Moves{
     public void clear(){
         enemyGroup.clear();
         isSpawning = false;
-    }
-
-    // makes cat smell like cheese so the rats go running for him
-
-    public void updateEnemies(Position target){
-        for (Enemy enemy : enemyGroup){
-            enemy.chasePlayer(target);
-        }
-
     }
 
     public int getMaxEnemyCount() {
