@@ -95,9 +95,9 @@ public class CombatSystem {
     private void moveTowardPlayer(Enemy enemy, int dx, int dy) {
         if (pathFind(enemy, dx, dy)) {
             enemy.chasePlayer(dx, dy);
-        } else if (pathFind(enemy, dx != 0 ? dx : enemy.getSpeed(), 0) && dx + dy != 0) {
+        } else if (pathFind(enemy, dx != 0 ? dx : enemy.getSpeed(), 0) && (dx != 0 || dy != 0)) {
             enemy.chasePlayer(dx != 0 ? dx : enemy.getSpeed(), 0);
-        } else if (pathFind(enemy, 0, dy != 0 ? dy : enemy.getSpeed()) && dx + dy != 0) {
+        } else if (pathFind(enemy, 0, dy != 0 ? dy : enemy.getSpeed()) && (dx != 0 || dy != 0)) {
             enemy.chasePlayer(0, dy != 0 ? dy : enemy.getSpeed());
         }
     }
