@@ -2,8 +2,9 @@ package ratplaguesurvivors.hud;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
 import ratplaguesurvivors.input.MouseHandler;
+import ratplaguesurvivors.interfaces.MouseInputListener;
 
-public class GameOverMenu {
+public class GameOverMenu implements MouseInputListener {
 
     private MouseHandler mouseHandler;
 
@@ -58,7 +59,7 @@ public class GameOverMenu {
         isHoveringQuit = false;
         isHoveringTryAgain = false;
 
-        mouseHandler = new MouseHandler(null,null);
+        mouseHandler = new MouseHandler(this);
         mouseHandler.init();
 
         backgroundOverPicture = new Picture(0, 0, backgroundOverPicturePath);
@@ -162,6 +163,21 @@ public class GameOverMenu {
     public void resetRequested() {
         isQuitRequested = false;
         tryAgainRequested = false;
+    }
+
+    @Override
+    public void onMouseMoved(int x, int y) {
+        if (isOnTryAgainRequested(x, y)) showHoveringTryAgainButton();
+        else showNormalTryAgainButton();
+
+        if (isOnQuitRequested(x, y)) showHoveringQuitButton();
+        else showNormalQuitButton();
+    }
+
+    @Override
+    public void onMouseClicked(int x, int y) {
+        if (isOnTryAgainRequested(x, y)) { requestTryAgain(); return; }
+        if (isOnQuitRequested(x, y))     { requestQuit(); }
     }
 
 }
