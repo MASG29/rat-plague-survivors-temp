@@ -2,8 +2,9 @@ package ratplaguesurvivors.input;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
 import ratplaguesurvivors.hud.HUDImageText;
+import ratplaguesurvivors.interfaces.MouseInputListener;
 
-public class PlayerName {
+public class PlayerName implements MouseInputListener {
 
 
     private static final int MAX_NAME_LENGTH = 20;
@@ -46,7 +47,7 @@ public class PlayerName {
 
         updateNameText();
 
-        mouseHandler = new MouseHandler(null,null);
+        mouseHandler = new MouseHandler(this);
         mouseHandler.init();
     };
 
@@ -166,5 +167,14 @@ public class PlayerName {
 
     public boolean isActive(){
         return active;
+    }
+
+    @Override
+    public void onMouseMoved(int x, int y) {
+    }
+
+    @Override
+    public void onMouseClicked(int x, int y) {
+        if (isOnStartButton(x, y)) requestStart();
     }
 }
