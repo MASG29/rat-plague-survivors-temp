@@ -55,11 +55,6 @@ public class Enemy extends Entity implements Moves{
         return sprite;
     }
 
-    // Getters and Setters
-    public boolean isAlive() {
-        return super.isAlive();
-    }
-
     public boolean cooldownReset() {
         if (this.attackTickCount >= 60) {
             this.attackTickCount = 0;

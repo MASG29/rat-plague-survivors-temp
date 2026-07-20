@@ -106,7 +106,7 @@ public class GameMenu implements MouseInputListener {
         startButtonHovering = false;
         trophyHovering = false;
 
-        mouseHandler = new MouseHandler(this); // só passa a si próprio
+        mouseHandler = new MouseHandler(this); // passes itself as the sole listener
         mouseHandler.init();
 
     }

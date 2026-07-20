@@ -244,11 +244,11 @@ public class GameLoop {
                 }
             }
 
-            // --- NOVO: boss não se move enquanto ataca ---
+            // boss doesn't move while attacking
             if (enemies.getEnemyType() == EnemyType.GIGARAT) {
                 BossAnimationController bossAnim = (BossAnimationController) enemies.getAnimationController();
                 enemies.updateAnimation();
-                // só move se não estiver em animação de ataque
+                // only moves if not in its attack animation
                 if (!bossAnim.isAttacking()) {
                     if (pathFind(enemies, dx, dy)) {
                         enemies.chasePlayer(dx, dy);
@@ -258,11 +258,11 @@ public class GameLoop {
                         enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
                     }
                 }
-                // dano dado só quando a animação de ataque terminou E ainda está em contacto
+                // damage is only dealt once the attack animation has finished AND it's still in contact
                 if (bossAnim.wasAttackJustFinished() && enemies.hasCollided(player)) {
                     player.takeDamage(enemies.getDmg());
                 }
-                continue; // salta o bloco de movimento dos inimigos normais
+                continue; // skip the regular enemy movement block below
             }
 
             if (pathFind(enemies, dx, dy)) {

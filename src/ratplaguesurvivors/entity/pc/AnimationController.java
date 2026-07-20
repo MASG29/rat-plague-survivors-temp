@@ -81,7 +81,7 @@ class AnimationController {
 
     // Called by PlayableCharacter when it moves or stops
     public void setAnimation(CatSpriteType[] newAnimation) {
-        if (currentAnimation == newAnimation) return; // já está nesta animação, não faz nada
+        if (currentAnimation == newAnimation) return; // already in this animation, nothing to do
         currentAnimation = newAnimation;
         currentFrame = 0;
         tickCount = 0;

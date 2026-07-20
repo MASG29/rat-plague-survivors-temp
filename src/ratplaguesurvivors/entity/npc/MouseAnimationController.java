@@ -42,7 +42,7 @@ class MouseAnimationController extends BaseAnimationController implements EnemyA
     }
 
     public void setAnimation(MouseSpriteType[] newAnimation) {
-        if (currentAnimation == newAnimation) return; // já está nesta animação, não faz nada
+        if (currentAnimation == newAnimation) return; // already in this animation, nothing to do
         currentAnimation = newAnimation;
         currentFrame = 0;
         tickCount = 0;

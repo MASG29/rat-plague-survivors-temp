@@ -43,7 +43,7 @@ class RatAnimationController extends BaseAnimationController implements EnemyAni
     }
 
     public void setAnimation(RatSpriteType[] newAnimation) {
-        if (currentAnimation == newAnimation) return; // já está nesta animação, não faz nada
+        if (currentAnimation == newAnimation) return; // already in this animation, nothing to do
         currentAnimation = newAnimation;
         currentFrame = 0;
         tickCount = 0;

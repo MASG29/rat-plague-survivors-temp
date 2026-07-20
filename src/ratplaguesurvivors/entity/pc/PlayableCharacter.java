@@ -42,8 +42,9 @@ public class PlayableCharacter extends Entity implements Moves {
 
 
         this.sprite = new Picture(getPos().getX(), getPos().getY(), CatSpriteType.IDLE_DOWN_0.getPath());
-        
-        //this.sprite.draw();
+
+        // sprite is only drawn once GameLoop.render() runs after the loading screen finishes,
+        // so the cat doesn't pop in on top of it
         killCounter = 0;
         this.animationController = new AnimationController(sprite);
         this.pcType = pcType;
@@ -86,7 +87,7 @@ public class PlayableCharacter extends Entity implements Moves {
 
         if (baseAttack.isAttacking()) return; // hold attack animation until the attack finishes
 
-        // atualiza a animação consoante a direção
+        // update the animation based on direction
         if (dx == 0 && dy == 0) {
             animationController.setAnimation(AnimationController.getIdleDown());
         } else if (dy > 0) {
@@ -141,7 +142,7 @@ public class PlayableCharacter extends Entity implements Moves {
         if (obj2 instanceof Enemy) {
             Enemy enemy = (Enemy) obj2;
             if (enemy.getEnemyType() == EnemyType.GIGARAT) {
-                return; // dano dado no GameLoop depois da animação terminar
+                return; // damage is dealt in GameLoop after the attack animation finishes
             }
             if (enemy.cooldownReset()) {
                 takeDamage(enemy.getDmg());

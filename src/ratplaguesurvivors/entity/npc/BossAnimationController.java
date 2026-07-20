@@ -86,7 +86,7 @@ public class BossAnimationController extends BaseAnimationController implements 
     }
 
     public void setAnimation(BossSpriteType[] newAnimation) {
-        if (currentAnimation == newAnimation) return;// já está nesta animação, não faz nada
+        if (currentAnimation == newAnimation) return; // already in this animation, nothing to do
         currentAnimation = newAnimation;
         currentFrame = 0;
         tickCount = 0;

@@ -3,6 +3,7 @@
 target/
 out/
 bin/
+build/
 
 .DS_Store
 

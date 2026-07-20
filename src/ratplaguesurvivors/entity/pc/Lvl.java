@@ -13,9 +13,9 @@ public class Lvl {
         resetXpToLVL();
     }
 
-    /*Sempre que adiciona xp verifica se o xp necessario para dar lvl up é 0 ou
-    maior e se for ele retira o xp necessario para dar lvl up ao currentxp e incrementa
-    o lvl aumentando assim tambem o xp necessario para dar lvl up.
+    /* Whenever xp is added, checks whether the xp needed for a level up has reached
+    zero; if so it consumes it from currentXp and increments the level, which also
+    recalculates the xp needed for the next level up.
      */
     public void addXp(int ammount){
         currentXp += ammount;
