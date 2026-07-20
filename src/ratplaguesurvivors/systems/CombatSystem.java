@@ -54,17 +54,18 @@ public class CombatSystem {
         int dx;
         int dy;
 
-        for (Enemy enemies : spawner.getEnemyGroup()) {
+        for (Enemy enemy : spawner.getEnemyGroup()) {
 
-            dx = enemies.chasePlayer(player.getHitbox())[0];
-            dy = enemies.chasePlayer(player.getHitbox())[1];
+            int[] chase = enemy.chasePlayer(player.getHitbox());
+            dx = chase[0];
+            dy = chase[1];
 
             if (player.isAttacking()) {
-                if (enemies.hasCollided(player.getBaseAttack())) {
-                    enemies.collided(player.getBaseAttack());
-                    if (!enemies.isAlive()) {
-                        rewardSystem.handleDefeat(enemies, player, spawner, collidables);
-                        if (enemies.getEnemyType() == EnemyType.GIGARAT) {
+                if (enemy.hasCollided(player.getBaseAttack())) {
+                    enemy.collided(player.getBaseAttack());
+                    if (!enemy.isAlive()) {
+                        rewardSystem.handleDefeat(enemy, player, spawner, collidables);
+                        if (enemy.getEnemyType() == EnemyType.GIGARAT) {
                             listener.onBossDefeated();
                             return;
                         }
@@ -73,59 +74,57 @@ public class CombatSystem {
             }
 
             // boss doesn't move while attacking
-            if (enemies.getEnemyType() == EnemyType.GIGARAT) {
-                BossAnimationController bossAnim = (BossAnimationController) enemies.getAnimationController();
-                enemies.updateAnimation();
+            if (enemy.getEnemyType() == EnemyType.GIGARAT) {
+                BossAnimationController bossAnim = (BossAnimationController) enemy.getAnimationController();
+                enemy.updateAnimation();
                 // only moves if not in its attack animation
                 if (!bossAnim.isAttacking()) {
-                    if (pathFind(enemies, dx, dy)) {
-                        enemies.chasePlayer(dx, dy);
-                    } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
-                        enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
-                    } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
-                        enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
-                    }
+                    moveTowardPlayer(enemy, dx, dy);
                 }
                 // damage is only dealt once the attack animation has finished AND it's still in contact
-                if (bossAnim.wasAttackJustFinished() && enemies.hasCollided(player)) {
-                    player.takeDamage(enemies.getDmg());
+                if (bossAnim.wasAttackJustFinished() && enemy.hasCollided(player)) {
+                    player.takeDamage(enemy.getDmg());
                 }
                 continue; // skip the regular enemy movement block below
             }
 
-            if (pathFind(enemies, dx, dy)) {
-                enemies.chasePlayer(dx, dy);
-            } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
-                enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
-            } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
-                enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
-            }
+            moveTowardPlayer(enemy, dx, dy);
         }
     }
 
-    private boolean pathFind(Enemy enemies, int dx, int dy) {
+    private void moveTowardPlayer(Enemy enemy, int dx, int dy) {
+        if (pathFind(enemy, dx, dy)) {
+            enemy.chasePlayer(dx, dy);
+        } else if (pathFind(enemy, dx != 0 ? dx : enemy.getSpeed(), 0) && dx + dy != 0) {
+            enemy.chasePlayer(dx != 0 ? dx : enemy.getSpeed(), 0);
+        } else if (pathFind(enemy, 0, dy != 0 ? dy : enemy.getSpeed()) && dx + dy != 0) {
+            enemy.chasePlayer(0, dy != 0 ? dy : enemy.getSpeed());
+        }
+    }
+
+    private boolean pathFind(Enemy enemy, int dx, int dy) {
         boolean col = false;
 
-        enemies.move(dx, dy);
+        enemy.move(dx, dy);
 
-        if (enemies.hasCollided(player)) {
-            player.collided(enemies);
-            enemies.collided(player);
+        if (enemy.hasCollided(player)) {
+            player.collided(enemy);
+            enemy.collided(player);
         }
 
         for (Collidable obs : collidables) {
 
-            if (enemies != obs) {
+            if (enemy != obs) {
                 if (!col) {
-                    col = (enemies.hasCollided(obs) || enemies.hasCollided(player) || !map.hasCollided(enemies)) && !(obs instanceof HUDComponent);
+                    col = (enemy.hasCollided(obs) || enemy.hasCollided(player) || !map.hasCollided(enemy)) && !(obs instanceof HUDComponent);
                 }
-                if (enemies.hasCollided(obs)) {
-                    enemies.collided(obs);
-                    obs.collided(enemies);
+                if (enemy.hasCollided(obs)) {
+                    enemy.collided(obs);
+                    obs.collided(enemy);
                 }
             }
         }
-        enemies.move(-dx, -dy);
+        enemy.move(-dx, -dy);
         return !col;
     }
 
