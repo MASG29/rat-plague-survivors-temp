@@ -12,11 +12,13 @@ import ratplaguesurvivors.entity.pc.*;
 import ratplaguesurvivors.hud.*;
 import ratplaguesurvivors.input.*;
 import ratplaguesurvivors.interfaces.Collidable;
+import ratplaguesurvivors.interfaces.CombatEventListener;
 import ratplaguesurvivors.map.*;
 import ratplaguesurvivors.output.ScoreWriter;
+import ratplaguesurvivors.systems.CombatSystem;
 
 
-public class GameLoop {
+public class GameLoop implements CombatEventListener {
 
     public static final int WINDOW_WIDTH = 1920;
     public static final int WINDOW_HEIGHT = 1080;
@@ -27,9 +29,8 @@ public class GameLoop {
     private HUD hud;
     private KeyboardHandlers keyboardHandlers;
     private GameState gameState;
-    private static int speed = 3;
     private ArrayList<Collidable> collidables;
-    private boolean collision;
+    private CombatSystem combatSystem;
     private GameMenu gameMenu;
     private GameOverMenu gameOverMenu;
     private boolean gameOverMenuVisible;
@@ -86,6 +87,7 @@ public class GameLoop {
         spawner = new EnemySpawner(map);
         hud = new HUD(player);
         collidables.addAll(hud.getComponents());
+        combatSystem = new CombatSystem(player, map, spawner, collidables, this);
     }
 
     public void start() throws InterruptedException {
@@ -165,7 +167,7 @@ public class GameLoop {
             player.takeDamage(player.getCurrentHP() - currentHP);
         }
 
-        checkCollisions();
+        combatSystem.resolveTick(dir);
         player.updateAnimation();
         player.attack(dir);
 
@@ -196,144 +198,25 @@ public class GameLoop {
         hud.draw();
     }
 
-    private void checkCollisions() {
+    @Override
+    public void onPlayerDied() {
+        setState(OVER);
+    }
 
-        playerMoves();
-        checkEnemyCollisions();
-
-        if (!player.isAlive()) {
+    @Override
+    public void onBossDefeated() {
+        if (lvl == MapLevel.values()[MapLevel.values().length - 1]) {
             setState(OVER);
             return;
         }
-    }
-
-    private void checkEnemyCollisions() {
-        int dx;
-        int dy;
-
-        for (Enemy enemies : spawner.getEnemyGroup()) {
-
-            dx = enemies.chasePlayer(player.getHitbox())[0];
-            dy = enemies.chasePlayer(player.getHitbox())[1];
-
-            if (player.isAttacking()) {
-                if (enemies.hasCollided(player.getBaseAttack())) {
-                    enemies.collided(player.getBaseAttack());
-                    if (!enemies.isAlive()) {
-                        collidables.remove(enemies);
-                        player.getLvl().addXp(enemies.xpDrop());
-                        enemies.getSprite().delete();
-                        player.killConfirmed(enemies.getEnemyType());
-                        spawner.decreaseAliveEnemies(enemies.getEnemyType());
-                        if (enemies.getEnemyType() == EnemyType.GIGARAT) {
-                            if (lvl == MapLevel.values()[MapLevel.values().length - 1]) {
-                                setState(OVER);
-                                return;
-                            }
-                            for (int i = 0; i < MapLevel.values().length - 1; i++) {
-                                if (lvl == MapLevel.values()[i]) {
-                                    lvl = MapLevel.values()[i + 1];
-                                    break;
-                                }
-                            }
-                            setState(LOADING);
-                            loadingScreen.start();
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // boss doesn't move while attacking
-            if (enemies.getEnemyType() == EnemyType.GIGARAT) {
-                BossAnimationController bossAnim = (BossAnimationController) enemies.getAnimationController();
-                enemies.updateAnimation();
-                // only moves if not in its attack animation
-                if (!bossAnim.isAttacking()) {
-                    if (pathFind(enemies, dx, dy)) {
-                        enemies.chasePlayer(dx, dy);
-                    } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
-                        enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
-                    } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
-                        enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
-                    }
-                }
-                // damage is only dealt once the attack animation has finished AND it's still in contact
-                if (bossAnim.wasAttackJustFinished() && enemies.hasCollided(player)) {
-                    player.takeDamage(enemies.getDmg());
-                }
-                continue; // skip the regular enemy movement block below
-            }
-
-            if (pathFind(enemies, dx, dy)) {
-                enemies.chasePlayer(dx, dy);
-            } else if (pathFind(enemies, dx != 0 ? dx : enemies.getSpeed(), 0) && dx + dy != 0) {
-                enemies.chasePlayer(dx != 0 ? dx : enemies.getSpeed(), 0);
-            } else if (pathFind(enemies, 0, dy != 0 ? dy : enemies.getSpeed()) && dx + dy != 0) {
-                enemies.chasePlayer(0, dy != 0 ? dy : enemies.getSpeed());
-            }
-        }
-    }
-
-    private boolean pathFind(Enemy enemies, int dx, int dy){
-        boolean col = false;
-
-        enemies.move(dx, dy);
-
-        if (enemies.hasCollided(player)) {
-            player.collided(enemies);
-            enemies.collided(player);
-        }
-
-        for (Collidable obs : collidables) {
-
-            if (enemies != obs) {
-                if (!col) {
-                    col = (enemies.hasCollided(obs) || enemies.hasCollided(player) || !map.hasCollided(enemies)) && !(obs instanceof HUDComponent);
-                }
-                if (enemies.hasCollided(obs)) {
-                    enemies.collided(obs);
-                    obs.collided(enemies);
-                }
-            }
-        }
-        enemies.move(-dx, -dy);
-        return !col;
-    }
-
-    private boolean playerMoves(){
-
-        Directions dir = keyboardHandlers.getDirection();
-
-        int dx = dir.getDx() * speed;
-        int dy = dir.getDy() * speed;
-
-        player.getHitbox().translate(dx, dy);
-
-        for (Collidable cols : collidables) {
-            collision = player.hasCollided(cols);
-
-            if (collision) {
-                player.collided(cols);
-                cols.collided(player);
-
+        for (int i = 0; i < MapLevel.values().length - 1; i++) {
+            if (lvl == MapLevel.values()[i]) {
+                lvl = MapLevel.values()[i + 1];
                 break;
             }
-
         }
-
-
-        if (!collision && map.hasCollided(player)) {
-            player.getHitbox().translate(-dx, -dy);
-            map.move(-dx, -dy);
-            player.move(dx, dy);
-            spawner.move(-dx, -dy);
-            return true;
-        }
-
-        player.getHitbox().translate(-dx, -dy);
-
-        return false;
+        setState(LOADING);
+        loadingScreen.start();
     }
 
     public void setState(GameState state) {
