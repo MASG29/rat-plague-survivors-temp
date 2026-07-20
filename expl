@@ -1,0 +1,303 @@
+# GameLoop como God Class — estratégias e raciocínio
+
+## Porque é que é um problema
+
+`GameLoop` acumula responsabilidades que não têm nada a ver umas com as
+outras:
+- composition root (cria e liga player, map, hud, spawner, menus, som...)
+- máquina de estados do jogo (`MENU/NAME_INPUT/LOADING/GAME/OVER`)
+- cheat de HP (debug) misturado dentro de `update()`
+- física/colisões (`playerMoves`, `pathFind`)
+- resolução de combate (dano, morte, XP, kill count, limpeza de sprites)
+- regras de progressão de nível (avançar `MapLevel` quando o boss morre)
+- render, HUD, som, persistência do highscore
+
+Consequência prática: não dá para testar colisões/combate sem arrancar o
+jogo todo (Canvas, sprites, etc. — impossível de isolar num teste JUnit,
+o que já estava listado no TODO como coisa a melhorar). E qualquer
+alteração às regras de combate arrisca partir a máquina de estados, e
+vice-versa, porque está tudo no mesmo sítio.
+
+## Estratégias possíveis
+
+1. **State Pattern.** Já existe uma interface `State`
+   (`interfaces/State.java`, `updateState()`/`renderState()`) que nunca é
+   implementada por ninguém — parece que estava prevista para isto e
+   ficou por fazer. Dava para criar uma classe por `GameState`
+   (`MenuState`, `NameInputState`, `LoadingState`, `PlayingState`,
+   `GameOverState`), e o `GameLoop` passava a ser só o "contexto": guarda
+   o estado atual e delega `updateState()`/`renderState()`. Prós: o
+   `switch` gigante em `start()` desaparece. Contras: os estados
+   precisam de acesso às mesmas coisas (player, map, hud, spawner...),
+   ou levam tudo isso no construtor (parâmetros a mais) ou é preciso um
+   objeto de contexto partilhado — é a mudança mais estrutural das
+   quatro, mais risco de partir uma transição de estado sem dar por
+   isso.
+
+2. **Extrair um "sistema" de combate/colisões (`CombatSystem`).** Tirar
+   de dentro do `GameLoop` tudo o que é física + resolução de combate:
+   `playerMoves`, `checkEnemyCollisions`, `pathFind`. O `GameLoop` deixa
+   de saber *como* uma colisão é resolvida, só fica a saber *quando*
+   mandar resolver e o que fazer quando lhe dizem "o jogador morreu" ou
+   "o boss morreu" — usando uma interface de listener, o mesmo padrão já
+   usado para desacoplar o `MouseHandler` do `GameMenu`. **Feito — ver
+   Passo 1.**
+
+3. **Extrair a progressão de nível/recompensas** — separar "o que
+   acontece quando um inimigo morre" (XP, kill count, limpeza de sprite)
+   da deteção da colisão em si, que hoje vive dentro do `CombatSystem`.
+   **Feito — ver Passo 3.**
+
+4. **Objeto de contexto partilhado** (`GameContext` a agrupar
+   player/map/hud/spawner/collidables) — só compensa quando já houver
+   2+ classes (sistemas ou estados) a precisarem dos mesmos dados ao
+   mesmo tempo. Com o State Pattern (opção 1) isso passa a acontecer — 5
+   estados a precisar dos mesmos objetos — por isso esta opção deixa de
+   ser prematura. **Ver Passo 4.**
+
+## Ordem escolhida
+
+1. `CombatSystem` (opção 2) — feito primeiro por ser a extração mais
+   densa e de menor risco (mecânica, comportamento preservado).
+2. Números mágicos (item 4 do TODO, 4º sub-bullet) — mecânico,
+   independente do resto, feito a seguir para tirar da frente.
+3. Extrair recompensa de inimigo do `CombatSystem` (opção 3) — pequeno,
+   isola ainda mais o `CombatSystem`.
+4. State Pattern (opção 1) — deixado para o fim por ser a mudança mais
+   estrutural e arriscada; faz mais sentido depois de tudo o resto já
+   estar fora do `GameLoop`.
+
+Nota sobre verificação: não há JUnit neste projeto e o jogo é uma app
+gráfica (Swing/Canvas via `simplegraphics`) — não há forma automatizada
+de confirmar "o jogo continua a comportar-se igual" para lá de
+`ant` compilar sem erros. Por isso: compilar depois de cada passo,
+manter cada passo comportamentalmente 1:1 com o original, e a
+confirmação visual final (`./run.sh`) fica por conta de quem tiver
+ecrã à mão.
+
+---
+
+## Passo 1 — `CombatSystem` (implementado)
+
+Criei:
+- `interfaces/CombatEventListener.java` — interface nova com
+  `onPlayerDied()` e `onBossDefeated()`. `GameLoop` implementa-a.
+- `systems/CombatSystem.java` — recebe `player`, `map`, `spawner`,
+  `collidables` (a mesma lista partilhada que o `GameLoop` já usava) e
+  o `CombatEventListener` no construtor. Método público
+  `resolveTick(Directions dir)` substitui o antigo `checkCollisions()`.
+
+Decisões tomadas durante a extração:
+
+- **Quem fica com a progressão de nível.** O bloco original, quando o
+  boss morre, decide se avança `MapLevel` ou acaba o jogo. Isso é uma
+  decisão sobre *estado do jogo*, não sobre *combate* — por isso ficou
+  no `GameLoop` (em `onBossDefeated()`), e o `CombatSystem` só reporta
+  o facto "o boss morreu", sem saber nada de `MapLevel`/`GameState`.
+- **`dir` passado como parâmetro em vez de lido de novo.** O código
+  original tinha uma duplicação escondida (`GameLoop.update()` e
+  `playerMoves()` liam a mesma direção duas vezes por tick). Ao mover
+  `playerMoves` para o `CombatSystem`, `dir` passou a ser parâmetro de
+  `resolveTick(dir)`.
+- **Campo `collision` virou variável local** — era reatribuído em todas
+  as iterações do `for` antes de ser lido, nunca dependia do tick
+  anterior, por isso podia passar a variável local sem mudar
+  comportamento.
+- **Ordem de chamadas e `return`s preservada ao pormenor**, incluindo o
+  `return;` no meio de `checkEnemyCollisions()` quando o boss morre.
+
+---
+
+## Passo 2 — Números mágicos (implementado)
+
+Plano (TODO item 4, 4º sub-bullet): `30000` (delay do boss), `60`
+(cooldown de ataque do inimigo), offsets de hitbox `40`/`10`/`192`
+espalhados por `Enemy`/`PlayableCharacter` → extrair para constantes
+nomeadas, sem mudar nenhum valor.
+
+Feito:
+- `Enemy.java`: `ATTACK_COOLDOWN_TICKS = 60` (era o `60` em
+  `cooldownReset()`); `HITBOX_OFFSET_X = 40` / `HITBOX_OFFSET_Y = 36`
+  (offset do hitbox normal no construtor); `BOSS_SPRITE_SIZE = 192`,
+  `BOSS_HITBOX_OFFSET_X = 40`, `BOSS_HITBOX_OFFSET_Y = 10` (bloco
+  `if (type == EnemyType.GIGARAT)`).
+- `PlayableCharacter.java`: `HITBOX_WIDTH = 40` / `HITBOX_HEIGHT = 60`
+  (já havia comentários `// 115`/`// 110` ao lado do cálculo, mantidos).
+- `GameLoop.java`: `BOSS_SPAWN_DELAY_MS = 30000` em `update()`. Nota:
+  este passa para dentro do `PlayingState`/contexto no Passo 4 (o
+  `update()` inteiro muda de sítio); a constante viaja com o código.
+
+Todos os valores mantidos, só nomeados — comportamento 1:1.
+`ant clean && ant` compilou sem erros depois desta etapa.
+
+---
+
+## Passo 3 — Extrair recompensa de inimigo do `CombatSystem` (implementado)
+
+Plano (TODO item 4, 3º sub-bullet, opção 3 do raciocínio acima): dentro
+de `CombatSystem.checkEnemyCollisions()`, quando um inimigo normal
+morre, o bloco faz 5 coisas de seguida (remover de `collidables`, dar
+XP, apagar sprite, confirmar kill, decrementar contagem viva do
+spawner) misturadas com a deteção da colisão em si. Isolar essas 5
+coisas numa classe nova só de "recompensa", sem tocar na decisão de
+`onBossDefeated()` (essa fica no `CombatSystem`, é uma costura já
+estabelecida no Passo 1).
+
+Cuidado identificado antes de mexer: hoje, quando um inimigo *normal*
+morre, não há `continue`/`return` a seguir ao bloco de morte — o código
+continua e o mesmo inimigo (já morto nesse tick) ainda passa pelo bloco
+de movimento (`pathFind`/`chasePlayer`) mais abaixo, no mesmo tick. Não
+é para "corrigir" isto ao extrair — é comportamento existente,
+preservar tal e qual.
+
+Feito:
+- `systems/EnemyRewardSystem.java` — classe nova, um único método
+  `handleDefeat(Enemy, PlayableCharacter, EnemySpawner, List<Collidable>)`
+  com as 5 instruções na mesma ordem.
+- `CombatSystem.checkEnemyCollisions()` passa a chamar
+  `rewardSystem.handleDefeat(...)` em vez de ter os 5 statements
+  inline; o `if (enemies.getEnemyType() == EnemyType.GIGARAT) { listener.onBossDefeated(); return; }`
+  a seguir manteve-se exatamente onde estava (mesma posição, mesmo
+  `return`, nada de `continue` novo).
+
+`ant clean && ant` compilou sem erros depois desta etapa.
+
+---
+
+## Passo 4 — State Pattern (em progresso)
+
+Plano (TODO item 4, 2º sub-bullet + opção 1 do raciocínio acima):
+substituir o `switch(gameState)` gigante em `GameLoop.start()` por uma
+classe por `GameState`, implementando a interface `State` já existente
+(`interfaces/State.java`) e hoje sem uso nenhum.
+
+### Restrição mais importante: `render()` não é por-tick
+
+Reli `GameLoop.start()`/`update()` com cuidado: `render()` **não** é
+chamado a cada tick do estado `GAME` — só é chamado duas vezes no
+código todo: logo depois de `mapUpdate()` quando `LOADING` termina
+(transição `LOADING → GAME`), e dentro de `restartGame()`. Ou seja,
+`render()` é um evento de "entrada no estado GAME", não parte do loop
+por tick. Isto importa porque a interface `State` tem
+`updateState()`/`renderState()` — se eu ligasse `renderState()` ao loop
+principal e ele corresse a cada tick, isso re-desenharia
+mapa/jogador/HUD todos os ticks, o que na `simplegraphics` arrisca
+duplicar `Picture`s já desenhadas (regressão visual que o `ant` não
+apanha, só se vê a correr o jogo). Por isso: `renderState()` só corre
+uma vez, no "enter" do estado (mapeado aos dois sítios onde `render()`
+já corre hoje), nunca dentro do loop `while(true)` em si.
+
+### Desenho escolhido
+
+- **`GameContext`** (novo, `init/GameContext.java`) — agrupa os campos
+  que hoje vivem em `GameLoop` e que 2+ estados vão precisar
+  (player, map, hud, spawner, keyboardHandlers, collidables,
+  combatSystem, gameMenu, gameOverMenu, loadingScreen, soundHandler,
+  playerName, namePlayer, scoreLoader, scoreWriter, mapTime, lvl,
+  currentHP) e os métodos que já existiam (`gameInit`, `mapUpdate`,
+  `clearMap`, `restartGame`, `render`, `update`). `GameLoop` passa a ser
+  só o "driver": guarda o `State` atual, o `while(true)`/`Thread.sleep`,
+  e o método `setState(GameState)`.
+- **`CombatEventListener` fica em `GameContext`** (não no `GameLoop`),
+  porque `onPlayerDied`/`onBossDefeated` mexem em campos do contexto
+  (`lvl`, chamadas a `render`/`mapUpdate`) — só precisam de pedir uma
+  transição de estado ao `GameLoop` através de uma referência pequena
+  (`StateSwitcher`, método `setState(GameState)`), em vez de o
+  `GameContext` inteiro depender do `GameLoop`.
+- Interface `State` ganha `throws InterruptedException` em
+  `updateState()` (é preciso porque `player.attack()` propaga essa
+  exceção) — a interface nunca teve implementações, por isso este
+  ajuste é seguro.
+- 5 classes de estado (`MenuState`, `NameInputState`, `LoadingState`,
+  `PlayingState`, `GameOverState`), cada uma só com uma referência ao
+  `GameContext` (e ao `StateSwitcher` para pedir transições). Cada
+  `updateState()` reproduz exatamente o corpo do `case` original,
+  incluindo guardas (`isStartRequested`, `isMenuRequested` com o
+  `break` antes de `update()`, `gameOverMenuVisible` de disparo único,
+  escrever o score só se for maior).
+
+### Estado desta etapa
+
+- [x] Desenho decidido e escrito acima.
+- [x] `GameContext` criado (`init/GameContext.java`).
+- [x] `interfaces/State.java` ajustado (`throws InterruptedException`
+      em `updateState()`, comentário a explicar porque `renderState()`
+      não corre por tick).
+- [x] `interfaces/StateSwitcher.java` criado (`setState(GameState)`).
+- [x] 5 classes de estado criadas em `init/states/`: `MenuState`,
+      `NameInputState`, `LoadingState`, `PlayingState`, `GameOverState`.
+      Cada uma só guarda `GameContext` + `StateSwitcher` e reproduz o
+      corpo exato do `case` original (guardas incluídas).
+- [x] `GameLoop` reduzido a driver fino: `EnumMap<GameState, State>` +
+      `currentState`, `start()` só faz
+      `currentState.updateState(); Thread.sleep(10);` em loop, e
+      implementa `StateSwitcher.setState()` trocando `currentState`.
+- [x] `ant clean && ant` compilou sem erros (67 ficheiros fonte).
+- [x] `javac` dos `src/tests/*.java` (não fazem parte do build Ant)
+      também compilou sem erros contra o jar novo — confirma que
+      `new GameLoop(); .init(); .start();` continua válido lá.
+- [x] Corrida manual: `java -jar build/RatPlagueSurvivors.jar` arrancou,
+      ficou vivo (sem stack trace no log) durante alguns segundos, e um
+      screenshot (`import -window root`) confirmou o menu principal a
+      desenhar-se normalmente (arte + botão "NEW GAME"), ou seja
+      `GameContext.init()`/`MenuState` a funcionar. **Não** dava para
+      automatizar cliques (sem `xdotool`/`scrot` no ambiente), por isso
+      as restantes transições (NAME_INPUT → LOADING → GAME → OVER →
+      restart) não foram confirmadas visualmente nesta sessão — só por
+      leitura cuidadosa do código (cada `updateState()` é uma cópia 1:1
+      do `case` original, só trocando acesso direto a campos por
+      chamadas a `context.getX()`/`context.setX()`). Recomendado
+      correr `./run.sh` manualmente e testar o percurso todo (nome →
+      loading → jogar até o boss → morrer/matar boss → ecrã de game
+      over → try again) antes de dar isto como definitivamente
+      confirmado.
+
+### Detalhes de implementação que vale a pena registar
+
+- **`gameOverMenu` não é `final`** em `GameContext` — `restartGame()`
+  reatribui-o (`gameOverMenu = new GameOverMenu();`), exatamente como
+  no `GameLoop` original. Marcar isto `final` por engano partiria a
+  compilação (e é um detalhe fácil de escorregar ao mover código entre
+  classes).
+- **`gameState = GameState.GAME;` no fim do `restartGame()` original**
+  saiu do método (que agora vive em `GameContext`, que não é dona do
+  estado atual) e passou para `GameOverState.updateState()`, logo a
+  seguir a `context.restartGame();` — é a própria state class que pede
+  a transição via `stateSwitcher.setState(GameState.GAME)`.
+- **Campo `scoreWriter` do `GameLoop` original** (só usado dentro do
+  bloco de `OVER`, nunca lido fora dele) não migrou como campo de
+  `GameContext` — virou variável local dentro de
+  `GameOverState.updateState()`. Sem efeito no comportamento (mesma
+  escrita no mesmo sítio), só deixou de ser um campo de classe sem
+  necessidade.
+- **`renderState()` fica vazio nas 5 classes.** Não é esquecimento: o
+  `render()` original só corria em dois sítios (fim do `LOADING`, fim
+  do `restartGame()`), nunca por tick. Preservar isso significa que
+  `context.render()` continua a ser chamado só de dentro de
+  `LoadingState.updateState()` (a `GameOverState` já não chama
+  `render()` diretamente — quem chama é `context.restartGame()`, que
+  inclui a chamada). Ligar `renderState()` ao loop principal teria
+  mudado este comportamento (re-desenho por tick), por isso ficou de
+  fora do driver (`GameLoop.start()` só chama `updateState()`).
+
+### Ficheiros novos/alterados neste passo
+
+Novos: `interfaces/StateSwitcher.java`, `init/GameContext.java`,
+`init/states/{MenuState,NameInputState,LoadingState,PlayingState,GameOverState}.java`.
+Alterados: `interfaces/State.java` (assinatura), `init/GameLoop.java`
+(reescrito para driver fino).
+
+`CLAUDE.md` (secção "Architecture", entradas `init/` e `systems/`)
+também foi atualizado para descrever este desenho — estava a descrever
+o estado *anterior* a este passo (o `switch` grande e o "próximo
+passo" que era exatamente isto).
+
+---
+
+## Resumo — ponto 4 do TODO, feito
+
+Os 4 sub-itens do ponto 4 (`GameLoop` como God Class) estão todos
+tratados: `CombatSystem` (Passo 1), números mágicos (Passo 2),
+`EnemyRewardSystem` (Passo 3) e State Pattern com `GameContext` (Passo
+4). `GameLoop.java` foi de ~275 linhas com um `switch` de 5 casos e
+~15 campos, para ~40 linhas só de fiação estado→classe.

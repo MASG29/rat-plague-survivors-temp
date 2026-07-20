@@ -29,6 +29,8 @@ public class PlayableCharacter extends Entity implements Moves {
     private static final int SPRITE_HEIGHT = 160;
     private static final int INIT_X = GameLoop.WINDOW_WIDTH / 2;
     private static final int INIT_Y = GameLoop.WINDOW_HEIGHT / 2;
+    private static final int HITBOX_WIDTH = 40;
+    private static final int HITBOX_HEIGHT = 60;
 
 
     public PlayableCharacter(PCType pcType) {
@@ -36,9 +38,9 @@ public class PlayableCharacter extends Entity implements Moves {
                 INIT_X, INIT_Y ,SPRITE_WIDTH, SPRITE_HEIGHT),
                 pcType.getBaseHealth(),
                 new Position(
-                        INIT_X + (SPRITE_WIDTH / 2) - (40 / 2),    // 115
-                        INIT_Y + (SPRITE_HEIGHT / 2) - (60 / 2),   // 110
-                        40, 60));
+                        INIT_X + (SPRITE_WIDTH / 2) - (HITBOX_WIDTH / 2),    // 115
+                        INIT_Y + (SPRITE_HEIGHT / 2) - (HITBOX_HEIGHT / 2),   // 110
+                        HITBOX_WIDTH, HITBOX_HEIGHT));
 
 
         this.sprite = new Picture(getPos().getX(), getPos().getY(), CatSpriteType.IDLE_DOWN_0.getPath());

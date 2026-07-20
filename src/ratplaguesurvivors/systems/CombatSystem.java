@@ -29,6 +29,7 @@ public class CombatSystem {
     private final EnemySpawner spawner;
     private final List<Collidable> collidables;
     private final CombatEventListener listener;
+    private final EnemyRewardSystem rewardSystem;
 
     public CombatSystem(PlayableCharacter player, Map map, EnemySpawner spawner,
                          List<Collidable> collidables, CombatEventListener listener) {
@@ -37,6 +38,7 @@ public class CombatSystem {
         this.spawner = spawner;
         this.collidables = collidables;
         this.listener = listener;
+        this.rewardSystem = new EnemyRewardSystem();
     }
 
     public void resolveTick(Directions playerDirection) {
@@ -61,11 +63,7 @@ public class CombatSystem {
                 if (enemies.hasCollided(player.getBaseAttack())) {
                     enemies.collided(player.getBaseAttack());
                     if (!enemies.isAlive()) {
-                        collidables.remove(enemies);
-                        player.getLvl().addXp(enemies.xpDrop());
-                        enemies.getSprite().delete();
-                        player.killConfirmed(enemies.getEnemyType());
-                        spawner.decreaseAliveEnemies(enemies.getEnemyType());
+                        rewardSystem.handleDefeat(enemies, player, spawner, collidables);
                         if (enemies.getEnemyType() == EnemyType.GIGARAT) {
                             listener.onBossDefeated();
                             return;

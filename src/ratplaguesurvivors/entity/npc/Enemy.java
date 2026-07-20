@@ -12,6 +12,12 @@ import ratplaguesurvivors.interfaces.*;
 public class Enemy extends Entity implements Moves{
     private static final int SPRITE_WIDTH = 47;
     private static final int SPRITE_HEIGHT = 80;
+    private static final int HITBOX_OFFSET_X = 40;
+    private static final int HITBOX_OFFSET_Y = 36;
+    private static final int BOSS_SPRITE_SIZE = 192;
+    private static final int BOSS_HITBOX_OFFSET_X = 40;
+    private static final int BOSS_HITBOX_OFFSET_Y = 10;
+    private static final int ATTACK_COOLDOWN_TICKS = 60;
     protected int xpValue;
     private Picture hitBy;
     private Picture sprite;
@@ -29,7 +35,7 @@ public class Enemy extends Entity implements Moves{
         super(type.getName(),
                 new Position(dx, dy, SPRITE_WIDTH, SPRITE_HEIGHT),
                 type.getHealth(),
-                new Position(dx + 40, dy + 36, SPRITE_WIDTH, SPRITE_HEIGHT));
+                new Position(dx + HITBOX_OFFSET_X, dy + HITBOX_OFFSET_Y, SPRITE_WIDTH, SPRITE_HEIGHT));
 
         this.xpValue = type.getXpvalue();
         this.sprite = new Picture(dx, dy, type.getSpritePath());
@@ -39,10 +45,11 @@ public class Enemy extends Entity implements Moves{
         this.attackTickCount = 0;
         this.enemyType = type;
         if (type == EnemyType.GIGARAT) {
-            super.setHitbox(dx + 40, dy + 10, 192 - 80, 192 - 10);
+            super.setHitbox(dx + BOSS_HITBOX_OFFSET_X, dy + BOSS_HITBOX_OFFSET_Y,
+                    BOSS_SPRITE_SIZE - 80, BOSS_SPRITE_SIZE - 10);
         }
         if (type == EnemyType.GIGARAT) {
-            super.setPosition(new Position(dx, dy, 192, 192));
+            super.setPosition(new Position(dx, dy, BOSS_SPRITE_SIZE, BOSS_SPRITE_SIZE));
         }
 
     }
@@ -56,7 +63,7 @@ public class Enemy extends Entity implements Moves{
     }
 
     public boolean cooldownReset() {
-        if (this.attackTickCount >= 60) {
+        if (this.attackTickCount >= ATTACK_COOLDOWN_TICKS) {
             this.attackTickCount = 0;
             return true;
         }
