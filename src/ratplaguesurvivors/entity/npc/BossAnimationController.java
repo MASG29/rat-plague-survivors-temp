@@ -71,7 +71,7 @@ public class BossAnimationController extends BaseAnimationController implements 
 
 
     @Override
-    public void advanceframe() {
+    public void advanceFrame() {
         if (currentFrame >= currentAnimation.length - 1 && isAttacking) {
             isAttacking = false;
             finished = true;
@@ -148,7 +148,7 @@ public class BossAnimationController extends BaseAnimationController implements 
         return RIGHT;
     }
 
-    public static BossSpriteType[] getBosseUp() {
+    public static BossSpriteType[] getBossUp() {
         return UP;
     }
 

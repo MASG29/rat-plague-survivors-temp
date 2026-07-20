@@ -19,9 +19,9 @@ public  abstract class BaseAnimationController {
         tickCount++;
         if (tickCount >= TICKS_PER_FRAME) {
             tickCount = 0;
-            advanceframe();
+            advanceFrame();
         }
     }
 
-    public abstract void advanceframe();
+    public abstract void advanceFrame();
 }

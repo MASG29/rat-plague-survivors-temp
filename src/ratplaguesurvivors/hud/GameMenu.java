@@ -190,7 +190,7 @@ public class GameMenu implements MouseInputListener {
                 && mouseY <= trophyForLeaderboardHoverHitboxY + trophyForLeaderboardHoverHitboxHeight;
     }
 
-    public void LeaderboardRequested() {
+    public void requestLeaderboard() {
         leaderboardRequested = true;
     }
 
@@ -248,11 +248,11 @@ public class GameMenu implements MouseInputListener {
             soundButton.clear();
             soundButton = null;
         }
-        toogleSound();
+        toggleSound();
         getSoundButton();
     }
 
-    public void toogleSound() {
+    public void toggleSound() {
         soundChange();
 
         if (!soundOn) {
@@ -281,7 +281,7 @@ public class GameMenu implements MouseInputListener {
 
     public void onMouseClicked(int x, int y) {
         if (isOnStartButton(x, y))          { requestStart(); return; }
-        if (isOnTrophyForLeaderboard(x, y)) { LeaderboardRequested(); return; }
+        if (isOnTrophyForLeaderboard(x, y)) { requestLeaderboard(); return; }
         if (isOnSound(x, y))                { updateSoundButton(); }
     }
 }

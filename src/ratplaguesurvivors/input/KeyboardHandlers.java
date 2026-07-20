@@ -4,6 +4,7 @@ import com.codeforall.online.simplegraphics.keyboard.KeyboardHandler;
 import com.codeforall.online.simplegraphics.keyboard.Keyboard;
 import com.codeforall.online.simplegraphics.keyboard.KeyboardEvent;
 import com.codeforall.online.simplegraphics.keyboard.KeyboardEventType;
+import ratplaguesurvivors.hud.PlayerName;
 
 public class KeyboardHandlers implements KeyboardHandler {
 

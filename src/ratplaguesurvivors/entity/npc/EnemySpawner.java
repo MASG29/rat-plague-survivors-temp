@@ -12,7 +12,7 @@ public class EnemySpawner implements Moves{
     private long lastSpawn;
     private int maxEnemyCount = 40;
     private int mouseMaxNumb;
-    private int ratMaxNUmb;
+    private int ratMaxNumb;
     private int gigaRatMaxNumb;
     private boolean isSpawning = true;
     private int mousesAlive = 0;
@@ -26,7 +26,7 @@ public class EnemySpawner implements Moves{
     public EnemySpawner(Map map){
         this.maxEnemyCount = map.getLevel().getMaxEnemyCount();
         this.mouseMaxNumb = map.getLevel().getMaxMouse();
-        this.ratMaxNUmb = map.getLevel().getMaxRat();
+        this.ratMaxNumb = map.getLevel().getMaxRat();
         this.gigaRatMaxNumb = map.getLevel().getMaxBoss();
     }
 
@@ -41,7 +41,7 @@ public class EnemySpawner implements Moves{
             if (mousesAlive < mouseMaxNumb){
                 available.add(0);
             }
-            if (ratsAlive < ratMaxNUmb){
+            if (ratsAlive < ratMaxNumb){
                 available.add(1);
             }
 

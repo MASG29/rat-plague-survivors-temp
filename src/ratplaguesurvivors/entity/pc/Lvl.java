@@ -4,13 +4,13 @@ public class Lvl {
     private int currentXp;
     private int currentLvl;
     private int maxLvl = 100;
-    private int xpToLVL;
+    private int xpToLvl;
     private int baseXpNeeded = 20;
 
     public Lvl(){
         this.currentLvl = 1;
         this.currentXp = 0;
-        resetXpToLVL();
+        resetXpToLvl();
     }
 
     /* Whenever xp is added, checks whether the xp needed for a level up has reached
@@ -19,15 +19,15 @@ public class Lvl {
      */
     public void addXp(int ammount){
         currentXp += ammount;
-        resetXpToLVL();
-        if (xpToLVL <= 0){
+        resetXpToLvl();
+        if (xpToLvl <= 0){
             currentLvl++;
-            resetXpToLVL();
+            resetXpToLvl();
         }
     }
 
-    private void resetXpToLVL(){
-        xpToLVL = exponential(baseXpNeeded, currentLvl) - currentXp;
+    private void resetXpToLvl(){
+        xpToLvl = exponential(baseXpNeeded, currentLvl) - currentXp;
     }
 
     private int exponential(int base, int n){
@@ -62,12 +62,12 @@ public class Lvl {
         this.maxLvl = maxLvl;
     }
 
-    public int getXpToLVL() {
-        return xpToLVL;
+    public int getXpToLvl() {
+        return xpToLvl;
     }
 
-    public void setXpToLVL(int xpToLVL) {
-        this.xpToLVL = xpToLVL;
+    public void setXpToLvl(int xpToLvl) {
+        this.xpToLvl = xpToLvl;
     }
 
 }

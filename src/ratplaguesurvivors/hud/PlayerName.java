@@ -1,7 +1,7 @@
-package ratplaguesurvivors.input;
+package ratplaguesurvivors.hud;
 
 import com.codeforall.online.simplegraphics.pictures.Picture;
-import ratplaguesurvivors.hud.HUDImageText;
+import ratplaguesurvivors.input.MouseHandler;
 import ratplaguesurvivors.interfaces.MouseInputListener;
 
 public class PlayerName implements MouseInputListener {

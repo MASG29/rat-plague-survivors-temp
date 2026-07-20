@@ -37,7 +37,7 @@ public class Enemy extends Entity implements Moves{
                 type.getHealth(),
                 new Position(dx + HITBOX_OFFSET_X, dy + HITBOX_OFFSET_Y, SPRITE_WIDTH, SPRITE_HEIGHT));
 
-        this.xpValue = type.getXpvalue();
+        this.xpValue = type.getXpValue();
         this.sprite = new Picture(dx, dy, type.getSpritePath());
         this.speed = type.getSpeed();
         this.animationController = type.createAnimationController(sprite);

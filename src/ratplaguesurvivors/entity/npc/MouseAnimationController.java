@@ -34,7 +34,7 @@ class MouseAnimationController extends BaseAnimationController implements EnemyA
 
 
     @Override
-    public void advanceframe() {
+    public void advanceFrame() {
 
         currentFrame = (currentFrame + 1) % currentAnimation.length;
         sprite.load(currentAnimation[currentFrame].getPath());

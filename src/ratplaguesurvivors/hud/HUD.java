@@ -55,7 +55,7 @@ public class HUD {
     public HUD(PlayableCharacter player) {
 
         this.player = player;
-        this.xpToNextLevel = player.getLvl().getXpToLVL();
+        this.xpToNextLevel = player.getLvl().getXpToLvl();
         this.currentXp = player.getLvl().getCurrentXp();
         this.ratKillCount = 0;
         this.mouseKillCount = 0;
@@ -105,7 +105,7 @@ public class HUD {
     }
 
     private void updateXpDisplay(){
-        xpDisplay.updateNumberTxt(new int[]{player.getLvl().getXpToLVL(), player.getLvl().getCurrentXp()});
+        xpDisplay.updateNumberTxt(new int[]{player.getLvl().getXpToLvl(), player.getLvl().getCurrentXp()});
     }
 
     private void updateBg(){

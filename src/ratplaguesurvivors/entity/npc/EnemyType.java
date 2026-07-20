@@ -11,16 +11,16 @@ public enum EnemyType {
 
     private String name;
     private int health;
-    private int xpvalue;
+    private int xpValue;
     private int damage;
     private int speed;
     private String spritePath;
     private boolean incrementOnChase;
 
-    EnemyType(String name, int health, int xpvalue, int damage, int speed, String spritePath, boolean incrementOnChase) {
+    EnemyType(String name, int health, int xpValue, int damage, int speed, String spritePath, boolean incrementOnChase) {
         this.name = name;
         this.health = health;
-        this.xpvalue = xpvalue;
+        this.xpValue = xpValue;
         this.damage = damage;
         this.speed = speed;
         this.spritePath = spritePath;
@@ -47,8 +47,8 @@ public enum EnemyType {
         return health;
     }
 
-    public int getXpvalue() {
-        return xpvalue;
+    public int getXpValue() {
+        return xpValue;
     }
 
     public int getDamage() {
